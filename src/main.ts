@@ -1,14 +1,16 @@
-import { createApp } from 'vue'
-import App from './App.vue'
+import { createApp } from "vue";
+import ElementPlus from "element-plus";
+import "element-plus/dist/index.css";
+import App from "./App.vue";
+import router from "./router";
 
-import './style.css'
+const app = createApp(App);
 
-import './demos/ipc'
-// If you want use Node.js, the`nodeIntegration` needs to be enabled in the Main process.
-// import './demos/node'
+app.use(router);
+app.use(ElementPlus);
 
-createApp(App)
-  .mount('#app')
-  .$nextTick(() => {
-    postMessage({ payload: 'removeLoading' }, '*')
-  })
+app.mount("#app").$nextTick(() => {
+  window.ipcRenderer.on("main-process-message", (_event, message) => {
+    console.log(message);
+  });
+});

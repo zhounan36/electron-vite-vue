@@ -23,6 +23,90 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
   // ...
 })
 
+// 定义电子API
+const electronAPI = {
+  /* 数据库初始化 */
+  initDatabase: () => ipcRenderer.invoke('init-database'),
+  
+  /* 通用IPC通道 */
+  sendMessage: (channel: string, ...args: any[]) => {
+    ipcRenderer.send(channel, ...args)
+  },
+  onMessage: (channel: string, callback: Function) => {
+    ipcRenderer.on(channel, (_event, ...args) => callback(...args))
+    return () => {
+      ipcRenderer.removeAllListeners(channel)
+    }
+  },
+  
+  /* 商品相关操作 */
+  goods: {
+    create: (data: any) => ipcRenderer.invoke('goods-create', data),
+    findAll: (options: any = {}) => ipcRenderer.invoke('goods-find-all', options),
+    findById: (id: number) => ipcRenderer.invoke('goods-find-by-id', id),
+    findByPage: (page: number, pageSize: number, options: any = {}) => 
+      ipcRenderer.invoke('goods-find-by-page', { page, pageSize, options }),
+    update: (id: number, data: any) => ipcRenderer.invoke('goods-update', { id, data }),
+    delete: (id: number) => ipcRenderer.invoke('goods-delete', id),
+    searchByName: (name: string) => ipcRenderer.invoke('goods-search-by-name', name)
+  },
+  
+  /* 包装相关操作 */
+  package: {
+    create: (data: any) => ipcRenderer.invoke('package-create', data),
+    createWithItems: (packageData: any, items: any[]) => 
+      ipcRenderer.invoke('package-create-with-items', { packageData, items }),
+    findAll: (options: any = {}) => ipcRenderer.invoke('package-find-all', options),
+    findById: (id: number) => ipcRenderer.invoke('package-find-by-id', id),
+    getWithItems: (id: number) => ipcRenderer.invoke('package-get-with-items', id),
+    findByPage: (page: number, pageSize: number, options: any = {}) => 
+      ipcRenderer.invoke('package-find-by-page', { page, pageSize, options }),
+    update: (id: number, data: any) => ipcRenderer.invoke('package-update', { id, data }),
+    updateWithItems: (id: number, packageData: any, items: any[]) => 
+      ipcRenderer.invoke('package-update-with-items', { id, packageData, items }),
+    delete: (id: number) => ipcRenderer.invoke('package-delete', id),
+    deleteWithItems: (id: number) => ipcRenderer.invoke('package-delete-with-items', id)
+  },
+  
+  /* 板车相关操作 */
+  trolley: {
+    create: (data: any) => ipcRenderer.invoke('trolley-create', data),
+    createWithItems: (trolleyData: any, items: any[]) => 
+      ipcRenderer.invoke('trolley-create-with-items', { trolleyData, items }),
+    findAll: (options: any = {}) => ipcRenderer.invoke('trolley-find-all', options),
+    findById: (id: number) => ipcRenderer.invoke('trolley-find-by-id', id),
+    getWithItems: (id: number) => ipcRenderer.invoke('trolley-get-with-items', id),
+    findByPage: (page: number, pageSize: number, options: any = {}) => 
+      ipcRenderer.invoke('trolley-find-by-page', { page, pageSize, options }),
+    update: (id: number, data: any) => ipcRenderer.invoke('trolley-update', { id, data }),
+    updateWithItems: (id: number, trolleyData: any, items: any[]) => 
+      ipcRenderer.invoke('trolley-update-with-items', { id, trolleyData, items }),
+    delete: (id: number) => ipcRenderer.invoke('trolley-delete', id),
+    deleteWithItems: (id: number) => ipcRenderer.invoke('trolley-delete-with-items', id),
+    checkCapacity: (id: number, items: any[]) => 
+      ipcRenderer.invoke('trolley-check-capacity', { id, items })
+  },
+  
+  /* 系统相关操作 */
+  system: {
+    getMachineId: () => ipcRenderer.invoke('get-machine-id'),
+    getRegistryValue: (key: string, valueName: string) => 
+      ipcRenderer.invoke('get-registry-value', { key, valueName }),
+    setRegistryValue: (key: string, valueName: string, value: string) => 
+      ipcRenderer.invoke('set-registry-value', { key, valueName, value }),
+    deleteRegistryValue: (key: string, valueName: string) => 
+      ipcRenderer.invoke('delete-registry-value', { key, valueName }),
+    validateRegistrationCode: (machineId: string, registrationCode: string) => 
+      ipcRenderer.invoke('validate-registration-code', { machineId, registrationCode })
+  }
+}
+
+// 暴露API给渲染进程
+contextBridge.exposeInMainWorld('electronAPI', electronAPI)
+
+// 导出类型定义
+export type ElectronAPI = typeof electronAPI
+
 // --------- Preload scripts loading ---------
 function domReady(condition: DocumentReadyState[] = ['complete', 'interactive']) {
   return new Promise((resolve) => {
@@ -115,4 +199,4 @@ window.onmessage = (ev) => {
   ev.data.payload === 'removeLoading' && removeLoading()
 }
 
-setTimeout(removeLoading, 4999)
+setTimeout(removeLoading, 500)
